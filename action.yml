@@ -1,0 +1,36 @@
+name: "OpenWrt ImageBuilder"
+description: "Build OpenWrt Image via the ImageBuilder"
+author: aparcar
+runs:
+  using: 'composite'
+  steps:
+    - run: |
+        echo "artifacts_dir=${ARTIFACTS_DIR:-$GITHUB_WORKSPACE}" >> "$GITHUB_OUTPUT"
+        echo "repo_dir=${REPO_DIR:-$GITHUB_WORKSPACE}" >> "$GITHUB_OUTPUT"
+      shell: bash
+      id: inputs
+    - run: sudo chown -R 1000:1000 ${{ steps.inputs.outputs.artifacts_dir }} ${{ steps.inputs.outputs.repo_dir }}
+      shell: bash
+    - run: docker build --build-arg CONTAINER --build-arg ARCH -t imagebuilder $GITHUB_ACTION_PATH
+      shell: bash
+    - run: |
+        docker run --rm \
+          --env EXTRA_REPOS \
+          --env NO_DEFAULT_REPOS \
+          --env NO_LOCAL_REPOS \
+          --env KEY_BUILD \
+          --env KEY_BUILD_PUB \
+          --env KEY_VERIFY \
+          --env NO_SIGNATURE_CHECK \
+          --env DISABLED_SERVICES \
+          --env PROFILE \
+          --env PACKAGES \
+          --env SIGN \
+          -v ${{ steps.inputs.outputs.artifacts_dir }}:/artifacts \
+          -v ${{ steps.inputs.outputs.repo_dir }}:/repo \
+          imagebuilder
+      shell: bash
+    - run: sudo chown -R --reference=${{ steps.inputs.outputs.artifacts_dir }}/.. ${{ steps.inputs.outputs.artifacts_dir }}
+      shell: bash
+    - run: sudo chown -R --reference=${{ steps.inputs.outputs.repo_dir }}/.. ${{ steps.inputs.outputs.repo_dir }}
+      shell: bash

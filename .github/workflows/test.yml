@@ -1,0 +1,40 @@
+name: Test
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    name: Test ${{ matrix.target[0] }}-${{ matrix.target[1] }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - ['ipq806x', 'generic']
+          - ['ath79', 'nand']
+          - ['x86', '64']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Generate full target name
+        env:
+          TARGET: ${{ format('{0}-{1}', matrix.target[0], matrix.target[1]) }}
+        run: |
+          echo "Full target name is $TARGET"
+          echo "TARGET=$TARGET" >> $GITHUB_ENV
+
+      - name: Add test directories
+        run: mkdir artifacts repo
+
+      - name: Build
+        uses: ./
+        env:
+          ARCH: ${{ env.TARGET }}-master
+          ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
+          REPO_DIR: ${{ github.workspace }}/repo
+          PACKAGES: vim privoxy
+
+      - name: Verify packages saved
+        run: find artifacts/bin/targets/${{ matrix.target[0] }}/${{ matrix.target[1] }}/ -maxdepth 1 -type f | grep .
