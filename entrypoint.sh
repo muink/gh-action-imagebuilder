@@ -46,8 +46,18 @@ fi
 
 cat repositories.conf
 
+make image \
+	PROFILE="$PROFILE" \
+	DISABLED_SERVICES="$DISABLED_SERVICES" \
+	ADD_LOCAL_KEY="$ADD_LOCAL_KEY" \
+	PACKAGES="$PACKAGES"
+
 if [ "$SIGN" = '1' ];then
 	pushd $BIN_DIR
 	usign -S -m sha256sums -s $BUILD_KEY
 	popd
+fi
+
+if [ -d bin/ ]; then
+	mv bin/ /artifacts/
 fi
