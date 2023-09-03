@@ -25,6 +25,7 @@ runs:
           --env DISABLED_SERVICES \
           --env PROFILE \
           --env PACKAGES \
+          --env ROOTFS_SIZE \
           -v ${{ steps.inputs.outputs.artifacts_dir }}:/artifacts \
           -v ${{ steps.inputs.outputs.repo_dir }}:/repo \
           imagebuilder

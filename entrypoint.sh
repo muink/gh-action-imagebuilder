@@ -46,6 +46,10 @@ fi
 
 cat repositories.conf
 
+if [ -n "$ROOTFS_SIZE" ]; then
+	sed -i "s|\(\bCONFIG_TARGET_ROOTFS_PARTSIZE\)=.*|\1=$ROOTFS_SIZE|" .config
+fi
+
 make image \
 	PROFILE="$PROFILE" \
 	DISABLED_SERVICES="$DISABLED_SERVICES" \
