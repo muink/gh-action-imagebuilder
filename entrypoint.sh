@@ -29,6 +29,23 @@ if [ -n "$KEY_VERIFY" ]; then
 	done
 fi
 
+regexp='src imagebuilder file:packages'
+
+if [ -z "$NO_DEFAULT_REPOS" ]; then
+	sed -i 's|^src/gz|## src/gz|g' repositories.conf
+fi
+if [ -z "$NO_LOCAL_REPOS" ]; then
+	sed -i "/$regexp/i\\src custom file:///repo/" repositories.conf
+fi
+for EXTRA_REPO in $EXTRA_REPOS; do
+	sed -i "/$regexp/i\\$(echo "$EXTRA_REPO" | tr '|' ' ')" repositories.conf
+done
+if [ -n "$NO_SIGNATURE_CHECK" ]; then
+	sed -i 's|^option check_signature|## option check_signature|' repositories.conf
+fi
+
+cat repositories.conf
+
 if [ "$SIGN" = '1' ];then
 	pushd $BIN_DIR
 	usign -S -m sha256sums -s $BUILD_KEY
