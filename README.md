@@ -22,17 +22,30 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target:
-          - ['x86', '64']
-          - ['ath79', 'nand']
+        version: [21.02.5, 22.03.5]
+        arch:
+          - x86_64
+          - mips_24kc
         include:
-          - target: ['ath79', 'nand']
+          - arch: x86_64
+            target: ['x86', '64']
+          - arch: mips_24kc
+            target: ['ath79', 'nand']
             profile: netgear_wndr4300
 
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
+      - name: Determine branch name
+        env:
+          VERSION: ${{ matrix.version }}
+        run: |
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          BRANCH="${VERSION%.*}"
+          echo "Building for $BRANCH"
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
       - name: Generate full target name
         env:
@@ -44,9 +57,9 @@ jobs:
       - name: Build
         uses: muink/gh-action-imagebuilder@master
         env:
-          ARCH: ${{ env.TARGET }}
+          ARCH: ${{ env.TARGET }}-${{ env.VERSION }}
           PROFILE: ${{ matrix.profile}}
-          REPO_DIR: ${{ github.workspace }}/releases
+          REPO_DIR: ${{ github.workspace }}/releases/packages-${{ env.BRANCH }}/${{ matrix.arch }}/luci
           PACKAGES: bash natmapt
 
       - name: Store images
@@ -77,5 +90,6 @@ The action reads a few env variables:
 * `NO_SIGNATURE_CHECK` not check packages signature. If your repos is not
   signed by `usign`, please enable this.
 * `DISABLED_SERVICES` which services in `/etc/init.d/` should be disabled
-* `PROFILE` override the default target profile. List available via `make info`.
+* `PROFILE` override the default target profile. List available via `make info`, Or
+  query via `https://downloads.openwrt.org/releases/<version>/targets/<target>/<subtarget>/`
 * `PACKAGES` packages to be installed.
