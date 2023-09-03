@@ -73,10 +73,9 @@ The action reads a few env variables:
 * `KEY_BUILD` can be a private Signify/`usign` key to sign the images.
 * `KEY_BUILD_PUB` the paired public key of the above private key.
 * `KEY_VERIFY` public keys for `usign` used to verify repos. Format is `'<key1 string>'
-  '<key2 string>' '<key3 string>'`. key string must be a single line ('\n' to '\\\\\\n')
+  '<key2 string>' '<key3 string>'`. key string must be preprocessed into base64 str
 * `NO_SIGNATURE_CHECK` not check packages signature. If your repos is not
   signed by `usign`, please enable this.
 * `DISABLED_SERVICES` which services in `/etc/init.d/` should be disabled
 * `PROFILE` override the default target profile. List available via `make info`.
 * `PACKAGES` packages to be installed.
-* `SIGN` create a `usign` signature for images. Default is 0. Set to 1 to enable.
