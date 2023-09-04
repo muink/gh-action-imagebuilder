@@ -5,12 +5,15 @@ eval "$(grep CONFIG_TARGET_BOARD .config)"
 eval "$(grep CONFIG_TARGET_SUBTARGET .config)"
 export BOARD=$CONFIG_TARGET_BOARD
 export SUBTARGET=$CONFIG_TARGET_SUBTARGET
-export BIN_DIR=bin/targets/$BOARD/$SUBTARGET
-export SCRIPT_DIR=scripts
-export OPKG_KEYS=keys
-export BUILD_KEY=key-build
-export STAGING_DIR_HOST=staging_dir/host
-alias usign="$STAGING_DIR_HOST/bin/usign"
+export TOPDIR=$(pwd)
+export OUTPUT_DIR=$TOPDIR/bin
+export BIN_DIR=$OUTPUT_DIR/targets/$BOARD/$SUBTARGET
+export SCRIPT_DIR=$TOPDIR/scripts
+export OPKG_KEYS=$TOPDIR/keys
+export BUILD_KEY=$TOPDIR/key-build
+export STAGING_DIR_HOST=$TOPDIR/staging_dir/host
+PATHBK="$PATH"
+export PATH="$STAGING_DIR_HOST/bin:$PATH"
 
 set -ef
 
@@ -29,9 +32,11 @@ if [ -n "$KEY_VERIFY" ]; then
 	done
 fi
 
+ls -R $OPKG_KEYS
+
 regexp='src imagebuilder file:packages'
 
-if [ -z "$NO_DEFAULT_REPOS" ]; then
+if [ -n "$NO_DEFAULT_REPOS" ]; then
 	sed -i 's|^src/gz|## src/gz|g' repositories.conf
 fi
 if [ -z "$NO_LOCAL_REPOS" ]; then
@@ -50,6 +55,7 @@ if [ -n "$ROOTFS_SIZE" ]; then
 	sed -i "s|\(\bCONFIG_TARGET_ROOTFS_PARTSIZE\)=.*|\1=$ROOTFS_SIZE|" .config
 fi
 
+export PATH="$PATHBK"
 make image \
 	PROFILE="$PROFILE" \
 	DISABLED_SERVICES="$DISABLED_SERVICES" \
@@ -58,10 +64,10 @@ make image \
 
 if [ "$SIGN" = '1' ];then
 	pushd $BIN_DIR
-	usign -S -m sha256sums -s $BUILD_KEY
+	$STAGING_DIR_HOST/bin/usign -S -m sha256sums -s $BUILD_KEY
 	popd
 fi
 
 if [ -d bin/ ]; then
-	mv bin/ /artifacts/
+	cp -Rf bin/ /artifacts/
 fi
