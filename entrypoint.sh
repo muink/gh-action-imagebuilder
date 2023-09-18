@@ -17,6 +17,11 @@ export PATH="$STAGING_DIR_HOST/bin:$PATH"
 
 set -ef
 
+for d in bin; do
+	mkdir -p /artifacts/$d 2>/dev/null
+	ln -s /artifacts/$d $d
+done
+
 if [ -n "$KEY_BUILD" ]; then
 	echo "$KEY_BUILD" > $BUILD_KEY
 	SIGN="1"
@@ -66,8 +71,4 @@ if [ "$SIGN" = '1' ];then
 	pushd $BIN_DIR
 	$STAGING_DIR_HOST/bin/usign -S -m sha256sums -s $BUILD_KEY
 	popd
-fi
-
-if [ -d bin/ ]; then
-	cp -Rf bin/ /artifacts/
 fi
