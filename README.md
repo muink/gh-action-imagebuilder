@@ -74,6 +74,7 @@ jobs:
 The action reads a few env variables:
 
 * `ARCH` determines the used OpenWrt ImageBuilder Docker container.
+  E.g. `x86-64` or `x86-64-22.03.2`.
 * `ARTIFACTS_DIR` determines where built images are saved.
   Defaults to the default working directory (`GITHUB_WORKSPACE`).
 * `CONTAINER` can set other ImageBuilder containers than `openwrt/imagebuilder`.
