@@ -5,11 +5,16 @@ on:
 
 jobs:
   build:
-    name: Test ${{ matrix.target[0] }}-${{ matrix.target[1] }}
+    name: Test ${{ matrix.target[0] }}-${{ matrix.target[1] }}-${{ matrix.release }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        release:
+          - master
+          - 23.05.2
+          - 23.05.0
+          - 22.03.2
         target:
           - ['ipq806x', 'generic']
           - ['ath79', 'nand']
@@ -31,7 +36,7 @@ jobs:
       - name: Build
         uses: ./
         env:
-          ARCH: ${{ env.TARGET }}-master
+          ARCH: ${{ env.TARGET }}-${{ matrix.release }}
           ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
           REPO_DIR: ${{ github.workspace }}/repo
           PACKAGES: vim privoxy
