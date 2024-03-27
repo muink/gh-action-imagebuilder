@@ -17,6 +17,23 @@ export PATH="$STAGING_DIR_HOST/bin:$PATH"
 
 set -ef
 
+GROUP=
+
+group() {
+	endgroup
+	echo "::group::  $1"
+	GROUP=1
+}
+
+endgroup() {
+	if [ -n "$GROUP" ]; then
+		echo "::endgroup::"
+	fi
+	GROUP=
+}
+
+trap 'endgroup' ERR
+
 for d in bin; do
 	mkdir -p /artifacts/$d 2>/dev/null
 	ln -s /artifacts/$d $d
@@ -37,7 +54,9 @@ if [ -n "$KEY_VERIFY" ]; then
 	done
 fi
 
+group "ls -R $OPKG_KEYS"
 ls -R $OPKG_KEYS
+endgroup
 
 regexp='src imagebuilder file:packages'
 
@@ -54,21 +73,27 @@ if [ -n "$NO_SIGNATURE_CHECK" ]; then
 	sed -i 's|^option check_signature|## option check_signature|' repositories.conf
 fi
 
+group "repositories.conf"
 cat repositories.conf
+endgroup
 
 if [ -n "$ROOTFS_SIZE" ]; then
 	sed -i "s|\(\bCONFIG_TARGET_ROOTFS_PARTSIZE\)=.*|\1=$ROOTFS_SIZE|" .config
 fi
+
+RET=0
 
 export PATH="$PATHBK"
 make image \
 	PROFILE="$PROFILE" \
 	DISABLED_SERVICES="$DISABLED_SERVICES" \
 	ADD_LOCAL_KEY="$ADD_LOCAL_KEY" \
-	PACKAGES="$PACKAGES"
+	PACKAGES="$PACKAGES" || RET=$?
 
 if [ "$SIGN" = '1' ];then
 	pushd $BIN_DIR
 	$STAGING_DIR_HOST/bin/usign -S -m sha256sums -s $BUILD_KEY
 	popd
 fi
+
+exit "$RET"
