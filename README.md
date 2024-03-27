@@ -92,5 +92,5 @@ The action reads a few env variables:
 * `DISABLED_SERVICES` which services in `/etc/init.d/` should be disabled
 * `PROFILE` override the default target profile. List available via `make info`, Or
   query via `https://downloads.openwrt.org/releases/<version>/targets/<target>/<subtarget>/`
-* `PACKAGES` packages to be installed.
+* `PACKAGES` (Optional) specify the list of extra packages (space separated) to be installed.
 * `ROOTFS_SIZE` RootFS partition size (MByte)
