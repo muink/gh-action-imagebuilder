@@ -50,7 +50,8 @@ if [ -n "$KEY_BUILD_PUB" ]; then
 fi
 if [ -n "$KEY_VERIFY" ]; then
 	for _key in $KEY_VERIFY; do
-		$SCRIPT_DIR/opkg-key add <(echo "$_key" | base64 -d)
+		base64 -d <<< "$_key" > /tmp/_key
+		$SCRIPT_DIR/opkg-key add /tmp/_key
 	done
 fi
 
