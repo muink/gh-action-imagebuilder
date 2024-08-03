@@ -68,7 +68,7 @@ if [ -z "$NO_LOCAL_REPOS" ]; then
 	sed -i "/$regexp/i\\src custom file:///repo/" repositories.conf
 fi
 for EXTRA_REPO in $EXTRA_REPOS; do
-	sed -i "/$regexp/i\\$(echo "$EXTRA_REPO" | tr '|' ' ')" repositories.conf
+	sed -i "/$regexp/i\\$(tr '|' ' ' <<< "$EXTRA_REPO")" repositories.conf
 done
 if [ -n "$NO_SIGNATURE_CHECK" ]; then
 	sed -i 's|^option check_signature|## option check_signature|' repositories.conf
