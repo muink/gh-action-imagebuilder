@@ -34,6 +34,10 @@ endgroup() {
 
 trap 'endgroup' ERR
 
+# snapshot containers don't ship with the ImageBuilder to save bandwidth
+# run setup.sh to download and extract the ImageBuilder
+[ ! -f setup.sh ] || bash setup.sh
+
 for d in bin; do
 	mkdir -p /artifacts/$d 2>/dev/null
 	ln -s /artifacts/$d $d
