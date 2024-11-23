@@ -85,7 +85,7 @@ The action reads a few env variables:
 * `REPO_DIR` used to add current repo to `repositories.conf`. Defaults to
   the default working directory (`GITHUB_WORKSPACE`).
 * `KEY_BUILD` can be a private Signify/`usign` key to sign the images.
-* `KEY_BUILD_PUB` the paired public key of the above private key.
+* `KEY_BUILD_PUB` (Only for opkg)  the paired public key of the above private key.
 * `KEY_VERIFY` public keys for `usign` used to verify repos. Format is `'<key1 string>'
   '<key2 string>' '<key3 string>'`. key string must be preprocessed into base64 str
 * `NO_SIGNATURE_CHECK` not check packages signature. If your repos is not

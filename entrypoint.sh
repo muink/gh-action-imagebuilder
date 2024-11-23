@@ -23,6 +23,7 @@ endgroup
 # rules
 eval "$(grep CONFIG_TARGET_BOARD .config)"
 eval "$(grep CONFIG_TARGET_SUBTARGET .config)"
+[ -z "$(grep CONFIG_USE_APK .config)" ] || export USE_APK=y
 export BOARD=$CONFIG_TARGET_BOARD
 export SUBTARGET=$CONFIG_TARGET_SUBTARGET
 export TOPDIR=$(pwd)
@@ -31,6 +32,8 @@ export BIN_DIR=$OUTPUT_DIR/targets/$BOARD/$SUBTARGET
 export SCRIPT_DIR=$TOPDIR/scripts
 export OPKG_KEYS=$TOPDIR/keys
 export BUILD_KEY=$TOPDIR/key-build
+export BUILD_KEY_APK_SEC=$TOPDIR/keys/local-private-key.pem
+export BUILD_KEY_APK_PUB=$TOPDIR/keys/local-public-key.pem
 export STAGING_DIR_HOST=$TOPDIR/staging_dir/host
 PATHBK="$PATH"
 export PATH="$STAGING_DIR_HOST/bin:$PATH"
@@ -41,24 +44,55 @@ for d in bin; do
 done
 
 if [ -n "$KEY_BUILD" ]; then
-	echo "$KEY_BUILD" > $BUILD_KEY
+	if [ -z "$USE_APK" ]; then
+		echo "$KEY_BUILD" > $BUILD_KEY
+	else
+		echo "$KEY_BUILD" > $BUILD_KEY_APK_SEC
+		openssl ec -in $BUILD_KEY_APK_SEC -pubout > $BUILD_KEY_APK_PUB
+		ADD_LOCAL_KEY="1"
+	fi
 	SIGN="1"
 fi
 if [ -n "$KEY_BUILD_PUB" ]; then
-	echo "$KEY_BUILD_PUB" > $BUILD_KEY.pub
-	$SCRIPT_DIR/opkg-key add $BUILD_KEY.pub
+	if [ -z "$USE_APK" ]; then
+		echo "$KEY_BUILD_PUB" > $BUILD_KEY.pub
+		$SCRIPT_DIR/opkg-key add $BUILD_KEY.pub
+	fi
 	ADD_LOCAL_KEY="1"
 fi
 if [ -n "$KEY_VERIFY" ]; then
 	for _key in $KEY_VERIFY; do
 		base64 -d <<< "$_key" > /tmp/_key
-		$SCRIPT_DIR/opkg-key add /tmp/_key
+		if [ -z "$USE_APK" ]; then
+			$SCRIPT_DIR/opkg-key add /tmp/_key
+		else
+			cp -f /tmp/_key $OPKG_KEYS/$(md5sum /tmp/_key | awk '{print $1}').pem
+		fi
 	done
 fi
 
 group "ls -R $OPKG_KEYS"
 ls -R $OPKG_KEYS
 endgroup
+
+if [ -n "$USE_APK" ]; then
+
+n=$(sed -n '$=' repositories)
+
+if [ -n "$NO_DEFAULT_REPOS" ]; then
+	sed -i 's|^http|# http|g' repositories
+fi
+if [ -z "$NO_LOCAL_REPOS" ]; then
+	sed -i "${n}a\\file:///repo/packages.adb" repositories
+fi
+for EXTRA_REPO in $EXTRA_REPOS; do
+	sed -i "${n}a\\$EXTRA_REPO" repositories
+done
+group "repositories"
+cat repositories
+endgroup
+
+else # use opkg
 
 regexp='src imagebuilder file:packages'
 
@@ -79,6 +113,8 @@ group "repositories.conf"
 cat repositories.conf
 endgroup
 
+fi
+
 if [ -n "$ROOTFS_SIZE" ]; then
 	sed -i "s|\(\bCONFIG_TARGET_ROOTFS_PARTSIZE\)=.*|\1=$ROOTFS_SIZE|" .config
 fi
@@ -94,7 +130,9 @@ make image \
 
 if [ "$SIGN" = '1' ];then
 	pushd $BIN_DIR
+	if [ -z "$USE_APK" ]; then
 	$STAGING_DIR_HOST/bin/usign -S -m sha256sums -s $BUILD_KEY
+	fi
 	popd
 fi
 
