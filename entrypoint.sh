@@ -1,4 +1,24 @@
 #!/bin/bash
+set -ef
+GROUP=
+group() {
+	endgroup
+	echo "::group::  $1"
+	GROUP=1
+}
+endgroup() {
+	if [ -n "$GROUP" ]; then
+		echo "::endgroup::"
+	fi
+	GROUP=
+}
+trap 'endgroup' ERR
+
+group "bash setup.sh"
+# snapshot containers don't ship with the ImageBuilder to save bandwidth
+# run setup.sh to download and extract the ImageBuilder
+[ ! -f setup.sh ] || bash setup.sh
+endgroup
 
 # rules
 eval "$(grep CONFIG_TARGET_BOARD .config)"
@@ -14,29 +34,6 @@ export BUILD_KEY=$TOPDIR/key-build
 export STAGING_DIR_HOST=$TOPDIR/staging_dir/host
 PATHBK="$PATH"
 export PATH="$STAGING_DIR_HOST/bin:$PATH"
-
-set -ef
-
-GROUP=
-
-group() {
-	endgroup
-	echo "::group::  $1"
-	GROUP=1
-}
-
-endgroup() {
-	if [ -n "$GROUP" ]; then
-		echo "::endgroup::"
-	fi
-	GROUP=
-}
-
-trap 'endgroup' ERR
-
-# snapshot containers don't ship with the ImageBuilder to save bandwidth
-# run setup.sh to download and extract the ImageBuilder
-[ ! -f setup.sh ] || bash setup.sh
 
 for d in bin; do
 	mkdir -p /artifacts/$d 2>/dev/null
